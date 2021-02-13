@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Interpolations where
 
 import qualified Data.Text as T
@@ -8,6 +10,10 @@ import qualified Hedgehog.Range as Range
 import Test.Tasty
 import Test.Tasty.Hedgehog
 import Yasi
+
+#if !(MIN_VERSION_base(4,11,0))
+import Data.Semigroup ((<>))
+#endif
 
 test_interpolation :: TestTree
 test_interpolation =
