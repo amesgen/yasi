@@ -36,8 +36,8 @@ library
     Yasi
     Yasi.Internal
   build-depends:
-      base >= 4.7 && < 5
-    , template-haskell >= 2.10 && < 2.18
+      base >= 4.11 && < 5
+    , template-haskell >= 2.13 && < 2.18
     , text ^>= 1.2
     , bytestring >= 0.10.8.2 && < 0.12
 
