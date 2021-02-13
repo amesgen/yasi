@@ -21,5 +21,7 @@ unit_segment_parsing = do
   ps "${foobar]" @?= Nothing
   ps "test-$0foo" @?= Nothing
   ps "${show }" @?= Just [ShowVar ""]
+  ps "${show}" @?= Just [ShowAbs]
+  ps "$show" @?= Just [ShowAbs]
   where
     ps = parseSegments '$'

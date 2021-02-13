@@ -30,8 +30,8 @@ test_interpolation =
         let p = T.encodeUtf8 "℘"
         [i|℘$a℘$b℘$c℘|] === p <> a <> p <> T.encodeUtf8 b <> p <> T.encodeUtf8 (T.pack c) <> p,
       testProperty "abstractions" . property $ do
-        (a, b) <- (,) <$> forAll genText <*> forAll genText
-        [i|xxx-${}${}-yyy|] a b === "xxx-" <> a <> b <> "-yyy"
+        (a, b) <- (,) <$> forAll genText <*> forAll (Gen.integral $ Range.constant 0 1000)
+        [i|xxx-${}$show-yyy|] a (b :: Int) === "xxx-" <> a <> T.pack (show b) <> "-yyy"
     ]
   where
     genString = Gen.string range Gen.unicodeAll

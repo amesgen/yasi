@@ -33,11 +33,13 @@ data Segment
   | Var String
   | ShowVar String
   | Abs -- idea due to interpolate
+  | ShowAbs
   deriving (Show, Eq, Generic)
 
 parseSegments :: MonadFail m => Char -> String -> m [Segment]
 parseSegments c = fmap (group []) . go
   where
+    -- rewrite this
     go s
       | let (lit, rest) = span (/= c) s, not (null lit) = (Lit lit :) <$> go rest
       | s == "" = pure []
@@ -47,6 +49,7 @@ parseSegments c = fmap (group []) . go
         (var, '}' : rest) ->
           let seg = case var of
                 "" -> Abs
+                "show" -> ShowAbs
                 's' : 'h' : 'o' : 'w' : ' ' : var -> ShowVar var
                 var -> Var var
            in (seg :) <$> go rest
@@ -54,7 +57,9 @@ parseSegments c = fmap (group []) . go
       | _ : v : rest' <- s,
         isVarStartChar v =
         let (vs, rest) = span isVarChar rest'
-         in (Var (v : vs) :) <$> go rest
+            var = v : vs
+            s = if var == "show" then ShowAbs else Var var
+         in (s :) <$> go rest
       | otherwise = fail $ "invalid char after " <> [c]
     isVarStartChar v = C.isAscii v && C.isAlpha v
     isVarChar v = C.isAscii v && (C.isAlphaNum v || v == '_' || v == '\'')
@@ -79,6 +84,9 @@ ipExpr cast combine segs = do
         Abs -> do
           n <- TH.newName "int"
           pure (TH.VarE n, TH.LamE [TH.VarP n])
+        ShowAbs -> do
+          n <- TH.newName "showint"
+          pure (TH.AppE (TH.VarE 'show) $ TH.VarE n, TH.LamE [TH.VarP n])
     prep asg af = do
       (as, g) <- asg
       (a, f) <- af
