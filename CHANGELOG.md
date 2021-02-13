@@ -1,5 +1,9 @@
 # Revision history for yasi
 
+## 0.1.0.0 -- 2021-02-13
+
+ * Support `show` abstractions
+
 ## 0.0.0.1 -- 2021-02-13
 
  * Support older GHC versions

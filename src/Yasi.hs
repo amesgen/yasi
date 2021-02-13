@@ -35,5 +35,7 @@ import Yasi.Internal
 --
 -- >>> let x = 1 + 1 in [i|1 + 1 = ${show x}|] :: ByteString
 -- "1 + 1 = 2"
+-- >>> [i|2 + 2 = $show|] (2 + 2) :: Text
+-- "2 + 2 = 4"
 i :: TH.QuasiQuoter
 i = interpolator '$' pure pure
