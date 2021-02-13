@@ -4,7 +4,7 @@
 --  * No dependency on [haskell-src-meta](https://hackage.haskell.org/package/haskell-src-meta).
 --    It is not actively developed, has long compile times and several bugs, some of which are
 --    by design (e.g. operator fixities).
---  * Supports to interpolate 'String', 'Data.Text.Text', 'Data.Text.Lazy.Text',
+--  * Supports interpolating 'String', 'Data.Text.Text', 'Data.Text.Lazy.Text',
 --    'Data.ByteString.ByteString' and 'Data.ByteString.Lazy.ByteString' (UTF8).
 module Yasi (i) where
 
