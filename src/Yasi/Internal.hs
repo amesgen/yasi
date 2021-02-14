@@ -71,10 +71,10 @@ parseSegments c = fmap (group []) . go
     lit [] = []
     lit ls = [Lit $ mconcat $ reverse ls]
 
-ipExpr :: TH.Exp -> TH.Exp -> [Segment] -> TH.Q TH.Exp
+ipExpr :: TH.Exp -> (TH.Exp -> TH.Exp) -> [Segment] -> TH.Q TH.Exp
 ipExpr cast combine segs = do
   (ls, lams) <- go segs
-  pure $ lams $ TH.AppE combine (TH.ListE ls)
+  pure $ lams $ combine $ TH.ListE ls
   where
     go = \case
       [] -> pure ([], id)
@@ -96,11 +96,11 @@ ipExpr cast combine segs = do
 interpolator ::
   Char ->
   -- | postprocess the 'TH.Exp'
-  (TH.Exp -> TH.Q TH.Exp) ->
+  (TH.Exp -> TH.Exp) ->
   TH.QuasiQuoter
 interpolator c pp = TH.QuasiQuoter {..}
   where
-    quoteExp = parseSegments c >=> ipExpr (TH.VarE 'stringy) (TH.VarE 'mconcat) >=> pp
+    quoteExp = parseSegments c >=> ipExpr (TH.VarE 'stringy) (pp . TH.AppE (TH.VarE 'mconcat))
     quotePat = const $ fail "pattern context not supported"
     quoteType = const $ fail "type context not supported"
     quoteDec = const $ fail "declaration context not supported"

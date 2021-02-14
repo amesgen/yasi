@@ -34,7 +34,7 @@ import Yasi.Internal
 -- >>> import Data.ByteString (ByteString)
 
 int :: (TH.Exp -> TH.Exp) -> TH.QuasiQuoter
-int f = interpolator '$' (pure . f)
+int = interpolator '$'
 
 -- | The main interpolator, intended to be used with
 -- [@QuasiQuotes@](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/template_haskell.html#extension-QuasiQuotes).
