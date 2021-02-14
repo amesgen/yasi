@@ -1,6 +1,10 @@
 # Revision history for yasi
 
-## 0.1.1.0 -- 2021-02-13
+## 0.1.1.1 -- 2021-02-14
+
+ * Fix interaction of new variants and abstraction
+
+## 0.1.1.0 -- 2021-02-14
 
  * Add interpolator variants (with different return types)
 
