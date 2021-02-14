@@ -4,6 +4,7 @@
 module Yasi.Internal
   ( Segment (..),
     parseSegments,
+    ipExpr,
     interpolator,
     Stringy (..),
   )
@@ -94,14 +95,12 @@ ipExpr cast combine segs = do
 
 interpolator ::
   Char ->
-  -- | postprocess the 'Segment's
-  ([Segment] -> TH.Q [Segment]) ->
   -- | postprocess the 'TH.Exp'
   (TH.Exp -> TH.Q TH.Exp) ->
   TH.QuasiQuoter
-interpolator c pp pp' = TH.QuasiQuoter {..}
+interpolator c pp = TH.QuasiQuoter {..}
   where
-    quoteExp = parseSegments c >=> pp >=> ipExpr (TH.VarE 'stringy) (TH.VarE 'mconcat) >=> pp'
+    quoteExp = parseSegments c >=> ipExpr (TH.VarE 'stringy) (TH.VarE 'mconcat) >=> pp
     quotePat = const $ fail "pattern context not supported"
     quoteType = const $ fail "type context not supported"
     quoteDec = const $ fail "declaration context not supported"
