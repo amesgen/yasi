@@ -38,6 +38,7 @@ library
   exposed-modules:
     Yasi
     Yasi.Internal
+    Yasi.Util
   build-depends:
       base >= 4.9 && < 5
     , template-haskell >= 2.11 && < 2.18
@@ -63,3 +64,4 @@ test-suite tasty
   other-modules:
       Segments
       Interpolations
+      Util

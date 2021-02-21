@@ -1,1 +1,1 @@
-cabal-docspec
+cabal-docspec -XQuasiQuotes
