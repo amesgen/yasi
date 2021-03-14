@@ -1,5 +1,9 @@
 # Revision history for yasi
 
+## 0.1.2.0 -- 2021-03-15
+
+ * Add `unindent` utility function.
+
 ## 0.1.1.1 -- 2021-02-14
 
  * Fix interaction of new variants and abstraction
