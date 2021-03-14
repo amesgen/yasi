@@ -1,1 +1,1 @@
-cabal-docspec -XQuasiQuotes
+cabal-docspec -XQuasiQuotes "$@"

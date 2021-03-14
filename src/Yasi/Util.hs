@@ -14,6 +14,8 @@ import qualified Data.Text as T
 
 -- | "Unindent" a string.
 --
+-- Also removes leading and trailing blank lines.
+--
 -- >>> :{
 -- txt = unindent [iT|
 --     foo
