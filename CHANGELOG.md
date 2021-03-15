@@ -1,5 +1,9 @@
 # Revision history for yasi
 
+## 0.1.2.1 -- 2021-03-15
+
+ * Allow to interpolate lazy into strict `ByteString`s and vice versa.
+
 ## 0.1.2.0 -- 2021-03-15
 
  * Add `unindent` utility function.

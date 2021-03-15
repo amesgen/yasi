@@ -1,6 +1,6 @@
 cabal-version: 2.4
 name: yasi
-version: 0.1.2.0
+version: 0.1.2.1
 
 synopsis: Yet another string interpolator
 description:
