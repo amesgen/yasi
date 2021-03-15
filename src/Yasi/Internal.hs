@@ -156,5 +156,11 @@ instance Stringy TL.Text BL.ByteString where
 instance Stringy B.ByteString B.ByteString where
   stringy = id
 
+instance Stringy B.ByteString BL.ByteString where
+  stringy = BL.fromStrict
+
 instance Stringy BL.ByteString BL.ByteString where
   stringy = id
+
+instance Stringy BL.ByteString B.ByteString where
+  stringy = BL.toStrict
