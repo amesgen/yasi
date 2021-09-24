@@ -21,7 +21,6 @@ import qualified Data.Text.Lazy.Encoding as TL
 import GHC.Generics (Generic)
 import qualified Language.Haskell.TH.Quote as TH
 import qualified Language.Haskell.TH.Syntax as TH
-
 #if !(MIN_VERSION_base(4,13,0))
 import Control.Monad.Fail (MonadFail)
 #endif
