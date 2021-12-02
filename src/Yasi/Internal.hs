@@ -46,20 +46,20 @@ parseSegments c = fmap (group []) . go
       | s == [c] = fail $ "should not end with single " <> [c]
       | _ : c' : rest <- s, c == c' = (Lit [c] :) <$> go rest
       | _ : '{' : rest <- s = case span (/= '}') rest of
-        (var, '}' : rest) ->
-          let seg = case var of
-                "" -> Abs
-                "show" -> ShowAbs
-                's' : 'h' : 'o' : 'w' : ' ' : var -> ShowVar var
-                var -> Var var
-           in (seg :) <$> go rest
-        _ -> fail "missing closing bracket"
+          (var, '}' : rest) ->
+            let seg = case var of
+                  "" -> Abs
+                  "show" -> ShowAbs
+                  's' : 'h' : 'o' : 'w' : ' ' : var -> ShowVar var
+                  var -> Var var
+             in (seg :) <$> go rest
+          _ -> fail "missing closing bracket"
       | _ : v : rest' <- s,
         isVarStartChar v =
-        let (vs, rest) = span isVarChar rest'
-            var = v : vs
-            s = if var == "show" then ShowAbs else Var var
-         in (s :) <$> go rest
+          let (vs, rest) = span isVarChar rest'
+              var = v : vs
+              s = if var == "show" then ShowAbs else Var var
+           in (s :) <$> go rest
       | otherwise = fail $ "invalid char after " <> [c]
     isVarStartChar v = C.isAscii v && C.isAlpha v
     isVarChar v = C.isAscii v && (C.isAlphaNum v || v == '_' || v == '\'')
