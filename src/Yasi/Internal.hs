@@ -1,12 +1,9 @@
-{-# LANGUAGE UndecidableInstances #-}
-
 -- | Internal module, no stability guarantees
 module Yasi.Internal
   ( Segment (..),
     parseSegments,
     ipExpr,
     interpolator,
-    Displayish (..),
     Stringish (..),
   )
 where
@@ -87,7 +84,7 @@ ipExpr transform segs = do
     prep asg af = do
       (as, g) <- asg
       (a, f) <- af
-      pure (TH.AppE (TH.VarE 'displayish) a : as, f . g)
+      pure (TH.AppE (TH.VarE 'TD.displayBuilder) a : as, f . g)
 
 interpolator ::
   Char ->
@@ -100,16 +97,6 @@ interpolator c pp = TH.QuasiQuoter {..}
     quotePat = const $ fail "pattern context not supported"
     quoteType = const $ fail "type context not supported"
     quoteDec = const $ fail "declaration context not supported"
-
-class Displayish a where
-  displayish :: a -> TLB.Builder
-
-instance {-# OVERLAPPABLE #-} TD.Display a => Displayish a where
-  displayish = TD.displayBuilder
-
--- String is still used too pervasively...
-instance Displayish String where
-  displayish = TLB.fromString
 
 class Stringish a where
   stringish :: TLB.Builder -> a

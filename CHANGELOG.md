@@ -1,5 +1,9 @@
 # Revision history for yasi
 
+## 0.2.0.1 -- 2022-03-13
+
+ * Update `text-display`, which makes an internal hack unnecessary
+
 ## 0.2.0.0 -- 2022-03-13
 
  * Support interpolating arbitrary expressions.
