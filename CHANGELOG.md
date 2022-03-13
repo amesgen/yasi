@@ -1,5 +1,10 @@
 # Revision history for yasi
 
+## 0.2.0.0 -- 2022-03-13
+
+ * Support interpolating arbitrary expressions.
+ * Use `Display` from the `text-display` package.
+
 ## 0.1.2.1 -- 2021-03-15
 
  * Allow to interpolate lazy into strict `ByteString`s and vice versa.
