@@ -5,7 +5,7 @@
 --  * Depends on [ghc-hs-meta](https://hackage.haskell.org/package/ghc-hs-meta)
 --    instead of [haskell-src-meta](https://hackage.haskell.org/package/haskell-src-meta)
 --    for interpolating arbitrary expressions.
---    This result in faster compile times and fewer bugs.
+--    This results in faster compile times and fewer bugs.
 module Yasi
   ( i,
 
