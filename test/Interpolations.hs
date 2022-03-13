@@ -1,44 +1,39 @@
-{-# LANGUAGE CPP #-}
-
 module Interpolations where
 
+import Control.Applicative (Const (..))
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import Data.Text.Display (display)
+import qualified Data.Text.Lazy as TL
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Test.Tasty
+import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog
 import Yasi
-
-#if !(MIN_VERSION_base(4,11,0))
-import Data.Semigroup ((<>))
-#endif
 
 test_interpolation :: TestTree
 test_interpolation =
   testGroup
     "interpolation"
-    [ testProperty "to String" . property $ do
+    [ testPropertyNamed "to String" "interpolation_to_String" . property $ do
         (a, b, c) <- (,,) <$> forAll genString <*> forAll genText <*> forAll genString
         [i|${a}++$b🙀🙀🙀🙀$c🙀|] === a <> "++" <> T.unpack b <> "🙀🙀🙀🙀" <> c <> "🙀",
-      testProperty "to Text" . property $ do
+      testPropertyNamed "to Text" "interpolation_to_Text" . property $ do
         (a, b, c) <- (,,) <$> forAll genText <*> forAll genText <*> forAll genString
         [i|😶😶$a😶😶$b😶😶$c😶😶|] === "😶😶" <> a <> "😶😶" <> b <> "😶😶" <> T.pack c <> "😶😶",
-      testProperty "to ByteString" . property $ do
-        (a, b, c) <- (,,) <$> forAll genBS <*> forAll genText <*> forAll genString
-        let p = T.encodeUtf8 "℘"
-        [i|℘$a℘$b℘$c℘|] === p <> a <> p <> T.encodeUtf8 b <> p <> T.encodeUtf8 (T.pack c) <> p,
-      testProperty "abstractions" . property $ do
-        (a, b) <- (,) <$> forAll genText <*> forAll genInt
-        [i|xxx-${}$show-yyy|] a (b :: Int) === "xxx-" <> a <> T.pack (show b) <> "-yyy",
-      testProperty "variants" . property $ do
-        (a, b) <- (,) <$> forAll genText <*> forAll genInt
-        [iT|xxx-${}$show-yyy|] a (b :: Int) === "xxx-" <> a <> T.pack (show b) <> "-yyy"
+      testPropertyNamed "abstractions" "interpolation_abstractions" . property $ do
+        (a, b :: Int) <- (,) <$> forAll genText <*> forAll genInt
+        [i|xxx-${}${}-yyy|] a b === "xxx-" <> a <> display b <> "-yyy",
+      testCase "interpolationg expressions" do
+        let foo :: Int -> Int -> Int
+            foo a b = a + b - 3
+        [iT|${1+1 :: Int}-${foo 2 4}|] @?= T.pack "2-3"
+        [iTL|${1+1 :: Int}-${foo 2 4}|] @?= TL.pack "2-3"
+        [iFS|${1+1 :: Int}-${foo 2 4}|] @?= (Const "2-3" :: Const String (Int -> Bool))
     ]
   where
-    genString = Gen.string range Gen.unicodeAll
-    genText = Gen.text range Gen.unicodeAll
-    genBS = Gen.bytes range
+    genString = Gen.string range Gen.unicode
+    genText = Gen.text range Gen.unicode
     range = Range.constant 0 20
     genInt = Gen.integral $ Range.constant 0 1000

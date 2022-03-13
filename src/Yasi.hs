@@ -1,11 +1,11 @@
 -- | Yet another string interpolator
 --
---  * Dead simple
---  * No dependency on [haskell-src-meta](https://hackage.haskell.org/package/haskell-src-meta).
---    It is not actively developed, has long compile times and several bugs, some of which are
---    by design (e.g. operator fixities).
---  * Supports interpolating 'String', 'Data.Text.Text', lazy 'Data.Text.Lazy.Text',
---    'Data.ByteString.ByteString' and lazy 'Data.ByteString.Lazy.ByteString' (UTF8).
+--  * Very simple, few dependencies.
+--  * Based on 'Data.Text.Display.Display' instead of 'Show'.
+--  * Depends on [ghc-src-meta](https://hackage.haskell.org/package/haskell-src-meta)
+--    instead of [haskell-src-meta](https://hackage.haskell.org/package/haskell-src-meta)
+--    for interpolating arbitrary expressions.
+--    This result in faster compile times and fewer bugs.
 module Yasi
   ( i,
 
@@ -14,13 +14,9 @@ module Yasi
     iS,
     iT,
     iTL,
-    iB,
-    iBL,
   )
 where
 
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as BL
 import Data.String (IsString (..))
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
@@ -31,10 +27,13 @@ import Yasi.Internal
 -- $setup
 -- >>> import Yasi
 -- >>> import Data.Text (Text)
--- >>> import Data.ByteString (ByteString)
+-- >>> import qualified Data.Text.Lazy
 
 int :: (TH.Exp -> TH.Exp) -> TH.QuasiQuoter
 int = interpolator '$'
+
+intT :: TH.Name -> TH.QuasiQuoter
+intT = int . flip TH.SigE . TH.ConT
 
 -- | The main interpolator, intended to be used with
 -- [@QuasiQuotes@](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/exts/template_haskell.html#extension-QuasiQuotes).
@@ -45,18 +44,13 @@ int = interpolator '$'
 -- >>> [i|${foo}string $bar|] :: String
 -- "yet another string interpolator"
 --
+-- The result type can be 'String', strict 'T.Text' or lazy 'TL.Text'.
+--
 -- You can also use @${}@ to create a function interpolator (this "abstraction" feature is inspired by
 -- [interpolate](https://hackage.haskell.org/package/interpolate)):
 --
--- >>> [i|more ${}${} code|] "point" "free" :: Text
--- "more pointfree code"
---
--- To use 'show' to interpolate a value:
---
--- >>> let x = 1 + 1 in [i|1 + 1 = ${show x}|] :: ByteString
--- "1 + 1 = 2"
--- >>> [i|2 + 2 = $show|] (2 + 2) :: Text
--- "2 + 2 = 4"
+-- >>> [i|more ${}${} code${replicate 3 '!'}|] "point" "free" :: Text
+-- "more pointfree code!!!"
 i :: TH.QuasiQuoter
 i = int id
 
@@ -69,9 +63,6 @@ i = int id
 iFS :: TH.QuasiQuoter
 iFS = int $ TH.AppE (TH.VarE 'fromString)
 
-intT :: TH.Name -> TH.QuasiQuoter
-intT = int . flip TH.SigE . TH.ConT
-
 -- | Like 'i', but with the result type fixed to 'String'.
 --
 -- @['iS'|...|] = ['i'|...|] :: 'String'@
@@ -81,7 +72,7 @@ intT = int . flip TH.SigE . TH.ConT
 iS :: TH.QuasiQuoter
 iS = intT ''String
 
--- | Like 'i', but with the result type fixed to 'T.Text'.
+-- | Like 'i', but with the result type fixed to strict 'T.Text'.
 --
 -- @['iT'|...|] = ['i'|...|] :: 'T.Text'@
 --
@@ -90,19 +81,11 @@ iS = intT ''String
 iT :: TH.QuasiQuoter
 iT = intT ''T.Text
 
--- | Like 'iT', but lazy.
+-- | Like 'i', but with the result type fixed to lazy 'TL.Text'.
+--
+-- @['iTL'|...|] = ['i'|...|] :: 'TL.Text'@
+--
+-- >>> :t [iTL|hi|]
+-- [iTL|hi|] :: Data.Text.Lazy.Text
 iTL :: TH.QuasiQuoter
 iTL = intT ''TL.Text
-
--- | Like 'i', but with the result type fixed to 'B.ByteString'.
---
--- @['iB'|...|] = ['i'|...|] :: 'B.ByteString'@
---
--- >>> :t [iB|hi|]
--- [iB|hi|] :: ByteString
-iB :: TH.QuasiQuoter
-iB = intT ''B.ByteString
-
--- | Like 'iB', but lazy.
-iBL :: TH.QuasiQuoter
-iBL = intT ''BL.ByteString

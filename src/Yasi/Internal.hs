@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | Internal module, no stability guarantees
 module Yasi.Internal
@@ -6,91 +6,88 @@ module Yasi.Internal
     parseSegments,
     ipExpr,
     interpolator,
-    Stringy (..),
+    Displayish (..),
+    Stringish (..),
   )
 where
 
 import Control.Monad ((>=>))
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as BL
 import qualified Data.Char as C
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import qualified Data.Text.Display as TD
 import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Encoding as TL
+import qualified Data.Text.Lazy.Builder as TLB
 import GHC.Generics (Generic)
+import qualified Language.Haskell.Meta.Parse as GhcHsMeta
+import qualified Language.Haskell.TH.Lib as TH
 import qualified Language.Haskell.TH.Quote as TH
 import qualified Language.Haskell.TH.Syntax as TH
-#if !(MIN_VERSION_base(4,13,0))
-import Control.Monad.Fail (MonadFail)
-#endif
-#if !(MIN_VERSION_base(4,11,0))
-import Data.Semigroup ((<>))
-#endif
 
 data Segment
   = Lit String
-  | Var String
-  | ShowVar String
+  | Exp String
   | Abs -- idea due to interpolate
-  | ShowAbs
   deriving (Show, Eq, Generic)
 
 parseSegments :: MonadFail m => Char -> String -> m [Segment]
 parseSegments c = fmap (group []) . go
   where
-    -- rewrite this
+    -- ugly, but simple enough™
     go s
       | let (lit, rest) = span (/= c) s, not (null lit) = (Lit lit :) <$> go rest
       | s == "" = pure []
       | s == [c] = fail $ "should not end with single " <> [c]
       | _ : c' : rest <- s, c == c' = (Lit [c] :) <$> go rest
-      | _ : '{' : rest <- s = case span (/= '}') rest of
-          (var, '}' : rest) ->
-            let seg = case var of
-                  "" -> Abs
-                  "show" -> ShowAbs
-                  's' : 'h' : 'o' : 'w' : ' ' : var -> ShowVar var
-                  var -> Var var
+      | _ : '{' : rest <- s = case span (/= '}') rest of -- TODO smarter?
+          (exp, '}' : rest) ->
+            let seg = if exp == "" then Abs else Exp exp
              in (seg :) <$> go rest
           _ -> fail "missing closing bracket"
       | _ : v : rest' <- s,
         isVarStartChar v =
           let (vs, rest) = span isVarChar rest'
-              var = v : vs
-              s = if var == "show" then ShowAbs else Var var
-           in (s :) <$> go rest
+           in (Exp (v : vs) :) <$> go rest
       | otherwise = fail $ "invalid char after " <> [c]
     isVarStartChar v = C.isAscii v && C.isAlpha v
     isVarChar v = C.isAscii v && (C.isAlphaNum v || v == '_' || v == '\'')
 
     group ls [] = lit ls
     group ls (Lit l : ss) = group (l : ls) ss
-    group ls (s : ss) = lit ls ++ (s : group [] ss)
+    group ls (s : ss) = lit ls <> (s : group [] ss)
     lit [] = []
     lit ls = [Lit $ mconcat $ reverse ls]
 
-ipExpr :: TH.Exp -> (TH.Exp -> TH.Exp) -> [Segment] -> TH.Q TH.Exp
-ipExpr cast combine segs = do
+ipExpr :: (TH.Exp -> TH.Exp) -> [Segment] -> TH.Q TH.Exp
+ipExpr transform segs = do
   (ls, lams) <- go segs
-  pure $ lams $ combine $ TH.ListE ls
+  pure
+    . lams
+    . transform
+    . TH.AppE (TH.VarE 'stringish)
+    . foldr (flip TH.UInfixE (TH.VarE '(<>))) (TH.VarE 'mempty)
+    $ ls
   where
     go = \case
       [] -> pure ([], id)
-      (s : ss) -> prep (go ss) $ case s of
-        Lit l -> pure (TH.SigE (TH.LitE (TH.StringL l)) (TH.ConT ''String), id)
-        Var v -> pure (TH.VarE (TH.mkName v), id)
-        ShowVar v -> pure (TH.AppE (TH.VarE 'show) $ TH.VarE (TH.mkName v), id)
+      s : ss -> prep (go ss) case s of
+        Lit l -> (,id) <$> [|$(TH.stringE l) :: String|]
+        Exp e -> do
+          exts <- TH.extsEnabled
+          exp <- case GhcHsMeta.parseExpWithExts exts e of
+            Right e -> pure e
+            Left (line, col, msg) ->
+              fail . unlines $
+                [ "Parse error at splice `" <> e <> "`:",
+                  show line <> ":" <> show col <> ": " <> msg
+                ]
+          pure (exp, id)
         Abs -> do
           n <- TH.newName "int"
           pure (TH.VarE n, TH.LamE [TH.VarP n])
-        ShowAbs -> do
-          n <- TH.newName "showint"
-          pure (TH.AppE (TH.VarE 'show) $ TH.VarE n, TH.LamE [TH.VarP n])
     prep asg af = do
       (as, g) <- asg
       (a, f) <- af
-      pure (TH.AppE cast a : as, f . g)
+      pure (TH.AppE (TH.VarE 'displayish) a : as, f . g)
 
 interpolator ::
   Char ->
@@ -99,67 +96,29 @@ interpolator ::
   TH.QuasiQuoter
 interpolator c pp = TH.QuasiQuoter {..}
   where
-    quoteExp = parseSegments c >=> ipExpr (TH.VarE 'stringy) (pp . TH.AppE (TH.VarE 'mconcat))
+    quoteExp = parseSegments c >=> ipExpr pp
     quotePat = const $ fail "pattern context not supported"
     quoteType = const $ fail "type context not supported"
     quoteDec = const $ fail "declaration context not supported"
 
-class Stringy a b where
-  stringy :: a -> b
+class Displayish a where
+  displayish :: a -> TLB.Builder
 
-instance Stringy String String where
-  stringy = id
+instance {-# OVERLAPPABLE #-} TD.Display a => Displayish a where
+  displayish = TD.displayBuilder
 
-instance Stringy String T.Text where
-  stringy = T.pack
+-- String is still used too pervasively...
+instance Displayish String where
+  displayish = TLB.fromString
 
-instance Stringy String TL.Text where
-  stringy = TL.pack
+class Stringish a where
+  stringish :: TLB.Builder -> a
 
-instance Stringy String B.ByteString where
-  stringy = T.encodeUtf8 . T.pack
+instance Stringish String where
+  stringish = TL.unpack . TLB.toLazyText
 
-instance Stringy String BL.ByteString where
-  stringy = TL.encodeUtf8 . TL.pack
+instance Stringish T.Text where
+  stringish = TL.toStrict . TLB.toLazyText
 
-instance Stringy T.Text T.Text where
-  stringy = id
-
-instance Stringy T.Text String where
-  stringy = T.unpack
-
-instance Stringy T.Text TL.Text where
-  stringy = TL.fromStrict
-
-instance Stringy T.Text B.ByteString where
-  stringy = T.encodeUtf8
-
-instance Stringy T.Text BL.ByteString where
-  stringy = BL.fromStrict . T.encodeUtf8
-
-instance Stringy TL.Text TL.Text where
-  stringy = id
-
-instance Stringy TL.Text String where
-  stringy = TL.unpack
-
-instance Stringy TL.Text T.Text where
-  stringy = TL.toStrict
-
-instance Stringy TL.Text B.ByteString where
-  stringy = BL.toStrict . TL.encodeUtf8
-
-instance Stringy TL.Text BL.ByteString where
-  stringy = TL.encodeUtf8
-
-instance Stringy B.ByteString B.ByteString where
-  stringy = id
-
-instance Stringy B.ByteString BL.ByteString where
-  stringy = BL.fromStrict
-
-instance Stringy BL.ByteString BL.ByteString where
-  stringy = id
-
-instance Stringy BL.ByteString B.ByteString where
-  stringy = BL.toStrict
+instance Stringish TL.Text where
+  stringish = TLB.toLazyText
