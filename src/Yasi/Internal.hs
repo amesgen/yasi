@@ -26,7 +26,7 @@ data Segment
   | Abs -- idea due to interpolate
   deriving (Show, Eq, Generic)
 
-parseSegments :: MonadFail m => Char -> String -> m [Segment]
+parseSegments :: (MonadFail m) => Char -> String -> m [Segment]
 parseSegments c = fmap (group []) . go
   where
     -- ugly, but simple enough™
