@@ -24,8 +24,9 @@ jobs:
           - 9.0.2
           - 9.2.8
           - 9.4.8
-          - 9.6.3
-          - 9.8.1
+          - 9.6.6
+          - 9.8.2
+          - 9.10.1
     steps:
       - uses: actions/checkout@v4
       - uses: haskell-actions/setup@v2
@@ -42,7 +43,7 @@ jobs:
           chmod +x "$DOCSPEC"
           "$DOCSPEC" --version
         env:
-          CABAL_DOCSPEC_VERSION: "0.0.0.20230517"
+          CABAL_DOCSPEC_VERSION: "0.0.0.20240703"
 
       - name: Configure
         run: cabal configure --enable-tests

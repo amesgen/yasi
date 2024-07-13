@@ -28,6 +28,7 @@ import Yasi.Internal
 -- >>> import Yasi
 -- >>> import Data.Text (Text)
 -- >>> import qualified Data.Text.Lazy
+-- >>> import Data.String (IsString)
 
 int :: (TH.Exp -> TH.Exp) -> TH.QuasiQuoter
 int = interpolator '$'
@@ -59,7 +60,7 @@ i = int id
 -- @['iFS'|...|] = 'fromString' ['i'|...|]@
 --
 -- >>> :t [iFS|hi|]
--- [iFS|hi|] :: Data.String.IsString a => a
+-- [iFS|hi|] :: IsString a => a
 iFS :: TH.QuasiQuoter
 iFS = int $ TH.AppE (TH.VarE 'fromString)
 
