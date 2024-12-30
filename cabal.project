@@ -1,1 +1,4 @@
 packages: .
+
+if impl(ghc >=9.12)
+  allow-newer: tasty-hedgehog:template-haskell, hedgehog:template-haskell
