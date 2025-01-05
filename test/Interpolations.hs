@@ -1,12 +1,12 @@
 module Interpolations where
 
 import Control.Applicative (Const (..))
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Text.Display (display)
-import qualified Data.Text.Lazy as TL
+import Data.Text.Lazy qualified as TL
 import Hedgehog
-import qualified Hedgehog.Gen as Gen
-import qualified Hedgehog.Range as Range
+import Hedgehog.Gen qualified as Gen
+import Hedgehog.Range qualified as Range
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog

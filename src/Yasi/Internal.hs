@@ -9,16 +9,16 @@ module Yasi.Internal
 where
 
 import Control.Monad ((>=>))
-import qualified Data.Char as C
-import qualified Data.Text as T
-import qualified Data.Text.Display as TD
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Builder as TLB
+import Data.Char qualified as C
+import Data.Text qualified as T
+import Data.Text.Display qualified as TD
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Builder qualified as TLB
 import GHC.Generics (Generic)
-import qualified Language.Haskell.Meta.Parse as GhcHsMeta
-import qualified Language.Haskell.TH.Lib as TH
-import qualified Language.Haskell.TH.Quote as TH
-import qualified Language.Haskell.TH.Syntax as TH
+import Language.Haskell.Meta.Parse qualified as GhcHsMeta
+import Language.Haskell.TH.Lib qualified as TH
+import Language.Haskell.TH.Quote qualified as TH
+import Language.Haskell.TH.Syntax qualified as TH
 
 data Segment
   = Lit String
