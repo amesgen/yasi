@@ -1,5 +1,10 @@
 # Revision history for yasi
 
+## 0.2.0.2 -- 2024-01-05
+
+ * Update to `text-display-1.0`
+ * Drop support for GHC `<9.2`
+
 ## 0.2.0.1 -- 2022-03-13
 
  * Update `text-display`, which makes an internal hack unnecessary
