@@ -10,10 +10,11 @@ where
 
 import Control.Monad ((>=>))
 import Data.Char qualified as C
+import Data.List (foldl')
 import Data.Text qualified as T
+import Data.Text.Builder.Linear qualified as TBL
 import Data.Text.Display qualified as TD
 import Data.Text.Lazy qualified as TL
-import Data.Text.Lazy.Builder qualified as TLB
 import GHC.Generics (Generic)
 import Language.Haskell.Meta.Parse qualified as GhcHsMeta
 import Language.Haskell.TH.Lib qualified as TH
@@ -61,7 +62,7 @@ ipExpr transform segs = do
     . lams
     . transform
     . TH.AppE (TH.VarE 'stringish)
-    . foldr (flip TH.UInfixE (TH.VarE '(<>))) (TH.VarE 'mempty)
+    . foldl' (\a b -> TH.InfixE (Just a) (TH.VarE '(<>)) (Just b)) (TH.VarE 'mempty)
     $ ls
   where
     go = \case
@@ -99,13 +100,13 @@ interpolator c pp = TH.QuasiQuoter {..}
     quoteDec = const $ fail "declaration context not supported"
 
 class Stringish a where
-  stringish :: TLB.Builder -> a
+  stringish :: TBL.Builder -> a
 
 instance Stringish String where
-  stringish = TL.unpack . TLB.toLazyText
+  stringish = T.unpack . TBL.runBuilder
 
 instance Stringish T.Text where
-  stringish = TL.toStrict . TLB.toLazyText
+  stringish = TBL.runBuilder
 
 instance Stringish TL.Text where
-  stringish = TLB.toLazyText
+  stringish = TL.fromStrict . TBL.runBuilder
