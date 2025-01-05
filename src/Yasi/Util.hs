@@ -4,9 +4,9 @@ module Yasi.Util
   )
 where
 
-import qualified Data.Char as C
+import Data.Char qualified as C
 import Data.List (dropWhileEnd)
-import qualified Data.Text as T
+import Data.Text qualified as T
 
 -- $setup
 -- >>> import Yasi

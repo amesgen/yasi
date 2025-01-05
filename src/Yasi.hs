@@ -18,10 +18,10 @@ module Yasi
 where
 
 import Data.String (IsString (..))
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import qualified Language.Haskell.TH.Quote as TH
-import qualified Language.Haskell.TH.Syntax as TH
+import Data.Text qualified as T
+import Data.Text.Lazy qualified as TL
+import Language.Haskell.TH.Quote qualified as TH
+import Language.Haskell.TH.Syntax qualified as TH
 import Yasi.Internal
 
 -- $setup
